@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>To-Do Mendaki</title>
+</head>
+<body>
+  <h1>📋 Daftar Persiapan Mendaki</h1>
+  <ul id="list"></ul>
+
+  <input type="text" id="inputItem" placeholder="Barang baru..." />
+  <select id="inputCat">
+    <option value="pribadi">Pribadi</option>
+    <option value="kelompok">Kelompok</option>
+  </select>
+  <button onclick="addItem()">Tambah</button>
+
+  <script>
+    async function loadTodos() {
+      const res = await fetch('/api/todos');
+      const todos = await res.json();
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      todos.forEach(todo => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <input type="checkbox" ${todo.completed ? 'checked' : ''} onclick="toggle(${todo.id})" />
+          ${todo.item} (${todo.category})
+          <button onclick="remove(${todo.id})">❌</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function addItem() {
+      const item = document.getElementById('inputItem').value;
+      const cat = document.getElementById('inputCat').value;
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add',
+          payload: { item, category: cat, completed: false }
+        })
+      });
+      loadTodos();
+    }
+
+    async function toggle(id) {
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle', payload: { id } })
+      });
+      loadTodos();
+    }
+
+    async function remove(id) {
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', payload: { id } })
+      });
+      loadTodos();
+    }
+
+    loadTodos();
+  </script>
+</body>
+</html>
